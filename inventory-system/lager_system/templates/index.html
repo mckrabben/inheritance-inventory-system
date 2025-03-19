@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lagersystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="max-w-4xl w-full bg-white p-8 shadow-lg rounded-lg space-y-6">
+        <h1 class="text-3xl font-bold text-center">📦 Lagersystem</h1>
+        
+        <!-- Search Section -->
+        <div>
+            <label for="searchInput" class="block text-lg font-semibold">🔍 Søg efter vare</label>
+            <div class="flex mt-2">
+                <input id="searchInput" type="text" placeholder="Indtast varenavn..." class="p-3 border w-full rounded-l-md focus:outline-none focus:ring focus:ring-blue-300" onkeydown="handleEnter(event, searchItem)">
+                <button onclick="searchItem()" class="bg-blue-500 text-white px-6 py-3 rounded-r-md hover:bg-blue-600">Søg</button>
+            </div>
+        </div>
+        
+        <!-- Item List Section -->
+        <div>
+            <h2 class="text-xl font-semibold">📋 Varer på lager</h2>
+            <ul id="itemsList" class="mt-2 bg-gray-50 p-4 rounded max-h-40 overflow-y-auto"></ul>
+        </div>
+        
+        <!-- Add Item Section -->
+        <div>
+            <h2 class="text-xl font-semibold">➕ Tilføj ny vare</h2>
+            <div class="grid grid-cols-3 gap-2 mt-2">
+                <input id="itemName" type="text" placeholder="Navn" class="p-3 border rounded focus:outline-none focus:ring focus:ring-green-300" onkeydown="handleEnter(event, addItem)">
+                <input id="itemQuantity" type="number" placeholder="Antal" class="p-3 border rounded focus:outline-none focus:ring focus:ring-green-300" onkeydown="handleEnter(event, addItem)">
+                <input id="itemLocation" type="text" placeholder="Placering" class="p-3 border rounded focus:outline-none focus:ring focus:ring-green-300" onkeydown="handleEnter(event, addItem)">
+            </div>
+            <button onclick="addItem()" class="bg-green-500 text-white px-6 py-3 mt-2 w-full rounded hover:bg-green-600">Tilføj</button>
+        </div>
+        
+        <!-- Update Item Section -->
+        <div>
+            <h2 class="text-xl font-semibold">🔄 Opdater vare</h2>
+            <div class="grid grid-cols-3 gap-2 mt-2">
+                <input id="updateName" type="text" placeholder="Navn" class="p-3 border rounded focus:outline-none focus:ring focus:ring-yellow-300" onkeydown="handleEnter(event, updateItem)">
+                <input id="updateQuantity" type="number" placeholder="Nyt antal" class="p-3 border rounded focus:outline-none focus:ring focus:ring-yellow-300" onkeydown="handleEnter(event, updateItem)">
+                <input id="updateLocation" type="text" placeholder="Ny placering (valgfri)" class="p-3 border rounded focus:outline-none focus:ring focus:ring-yellow-300" onkeydown="handleEnter(event, updateItem)">
+            </div>
+            <button onclick="updateItem()" class="bg-yellow-500 text-white px-6 py-3 mt-2 w-full rounded hover:bg-yellow-600">Opdater</button>
+        </div>
+        
+        <!-- Remove Item Section -->
+        <div>
+            <h2 class="text-xl font-semibold">❌ Fjern vare</h2>
+            <div class="mt-2 flex">
+                <input id="removeName" type="text" placeholder="Navn" class="p-3 border w-full rounded-l-md focus:outline-none focus:ring focus:ring-red-300" onkeydown="handleEnter(event, removeItem)">
+                <button onclick="removeItem()" class="bg-red-500 text-white px-6 py-3 rounded-r-md hover:bg-red-600">Fjern</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchItems() {
+            const response = await fetch('/items');
+            const data = await response.json();
+            document.getElementById('itemsList').innerHTML = data.map(item => `<li class='p-2 border-b'>${item}</li>`).join('');
+        }
+
+        async function searchItem() {
+            const query = document.getElementById('searchInput').value;
+            const response = await fetch(`/search?query=${query}`);
+            const data = await response.json();
+            document.getElementById('itemsList').innerHTML = data.map(item => `<li class='p-2 border-b'>${item}</li>`).join('');
+        }
+
+        async function addItem() {
+            const name = document.getElementById('itemName').value;
+            const quantity = document.getElementById('itemQuantity').value;
+            const location = document.getElementById('itemLocation').value;
+            await fetch('/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name, quantity, location })
+            });
+            fetchItems();
+        }
+
+        async function updateItem() {
+            const name = document.getElementById('updateName').value;
+            const new_quantity = document.getElementById('updateQuantity').value;
+            const new_off_site_location = document.getElementById('updateLocation').value;
+            await fetch('/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name, new_quantity, new_off_site_location })
+            });
+            fetchItems();
+        }
+
+        async function removeItem() {
+            const name = document.getElementById('removeName').value;
+            await fetch('/remove', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name })
+            });
+            fetchItems();
+        }
+
+        function handleEnter(event, action) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                action();
+            }
+        }
+
+        fetchItems();
+    </script>
+</body>
+</html>
